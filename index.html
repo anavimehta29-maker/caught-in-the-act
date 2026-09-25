@@ -846,6 +846,36 @@
         animation-duration: .01ms !important;
       }
     }
+
+    @media (max-width: 900px) {
+      /* Prevent text clipping on left edge */
+      h1, h2, h3, p, span, 
+      h1 span:first-child, 
+      h1 span:last-child,
+      .slide-caption, [class*="caption"], [class*="title"] {
+        transform: none !important;
+        margin-left: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      /* Prevent image cutoff */
+      img, figure, picture, .slide-image, .photo-wrapper {
+        max-width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+      }
+
+      /* Disable floating photo cursor on small screens */
+      #photoCursor, #photoCursor.is-active, .cursor, [class*="cursor"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    }
   </style>
 </head>
 <body>
