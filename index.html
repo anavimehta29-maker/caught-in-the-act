@@ -1,0 +1,1409 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#282231">
+  <title>Caught in the Act | Mediathon 3.0</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
+    :root {
+      --ink: #e7dcf0;
+      --paper: #282231;
+      --soft: #655a70;
+      --line: rgba(233,229,220,.2);
+      --accent: #a24f70;
+      --warm: #756681;
+      --serif: 'Playfair Display', Georgia, serif;
+      --mono: 'DM Mono', monospace;
+      --hero-progress: 0;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--ink); }
+    body {
+      margin: 0;
+      color: var(--paper);
+      background: var(--ink);
+      font-family: Manrope, sans-serif;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ─── Film grain overlay ─── */
+    body::before {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      pointer-events: none;
+      content: '';
+      opacity: .055;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+      mix-blend-mode: overlay;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { color: inherit; font: inherit; cursor: pointer; }
+    img { display: block; max-width: 100%; }
+    .mono { font: 500 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .wrap { width: min(1220px, calc(100% - 72px)); margin: auto; }
+
+    /* ─── Scroll progress bar ─── */
+    #scrollProgress {
+      position: fixed;
+      z-index: 30;
+      top: 0;
+      left: 0;
+      width: calc(var(--page-progress, 0) * 100%);
+      height: 2px;
+      background: var(--accent);
+      pointer-events: none;
+    }
+
+    /* ─── Custom photo cursor ─── */
+    #photoCursor {
+      position: fixed;
+      z-index: 40;
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      color: var(--accent);
+      font: 500 9px var(--mono);
+      letter-spacing: .1em;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.65);
+      transition: opacity .25s, transform .25s;
+    }
+    #photoCursor.is-active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+    /* ─── Header ─── */
+    .site-header {
+      position: absolute;
+      z-index: 5;
+      top: 0;
+      left: 50%;
+      width: min(1320px, calc(100% - 72px));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 27px 0;
+      transform: translateX(-50%);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+    .team-name { font: 600 11px/1.2 var(--mono); letter-spacing: .1em; color: var(--accent); text-transform: none; }
+    .event-name { font-size: 13px; font-weight: 800; letter-spacing: .06em; color: var(--ink); text-transform: none; }
+    .campus-name { font: 500 9px/1.2 var(--mono); letter-spacing: .08em; color: var(--soft); text-transform: uppercase; }
+    .logo-mark {
+      display: grid;
+      width: 27px;
+      height: 27px;
+      place-items: center;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font: 600 11px var(--mono);
+    }
+    .header-right { display: flex; align-items: center; gap: 28px; color: var(--soft); }
+    .header-right a,
+    .header-right button {
+      position: relative;
+      padding-bottom: 7px;
+      transition: color .2s;
+      background: none;
+      border: none;
+      font: 500 10px/1.2 var(--mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .header-right a:hover,
+    .header-right button:hover { color: var(--accent); }
+    .header-right a::after,
+    .header-right button::after {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 1px;
+      content: '';
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform .35s ease;
+    }
+    .header-right a:hover::after,
+    .header-right button:hover::after { transform: scaleX(1); transform-origin: left; }
+
+    /* ─── Hero ─── */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .hero::after {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background: radial-gradient(circle at 50% 50%, rgba(162, 79, 112, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      width: min(1320px, calc(100% - 72px));
+      margin: 0 auto;
+      padding-top: 140px;
+      padding-bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.2rem;
+      pointer-events: none;
+    }
+    .hero-title-container,
+    .hero-title-wrap {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .hero-kicker {
+      margin: 0;
+      color: var(--accent);
+      opacity: calc(1 - var(--hero-progress) * 2);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    h1 {
+      max-width: 1200px;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(52px, 8.5vw, 130px);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: calc(-0.06em + var(--hero-progress) * 0.1em);
+      word-spacing: calc(var(--hero-progress) * 1.5rem);
+      text-transform: uppercase;
+      text-shadow: 0 12px 34px rgba(0,0,0,.48);
+      transform: translateY(calc(var(--hero-progress) * 4vh)) scale(calc(1 + var(--hero-progress) * 0.15));
+      transform-origin: left top;
+      transition: letter-spacing .1s ease-out, transform .1s ease-out;
+    }
+    h1 span { display: block; }
+    h1 span:first-child {
+      display: inline-block;
+      transform: translateX(calc(var(--hero-progress) * -2vw));
+      letter-spacing: calc(-0.075em + var(--hero-progress) * 0.08em);
+    }
+    h1 span:last-child {
+      padding-left: calc(10vw + var(--hero-progress) * 6vw);
+      font-style: italic;
+      color: var(--accent);
+      letter-spacing: calc(-0.075em + var(--hero-progress) * 0.14em);
+    }
+    .hero-sub {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-bottom: 20px;
+      opacity: calc(1 - var(--hero-progress) * 2.3);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .hero-sub p { max-width: 280px; margin: 0; color: var(--soft); font-size: 13px; line-height: 1.7; }
+    .scroll-prompt { display: flex; align-items: center; gap: 12px; color: var(--paper); }
+    .scroll-prompt i { display: block; width: 55px; height: 1px; background: var(--accent); }
+    .hero-meta {
+      position: absolute;
+      right: 0;
+      bottom: 30px;
+      color: var(--soft);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    /* ─── Section intro ─── */
+    .section-intro { padding: 150px 0 125px; background: var(--ink); }
+    .eyebrow { color: var(--accent); }
+    .intro-grid { display: grid; grid-template-columns: 1fr 1.12fr; gap: 12vw; align-items: end; }
+    h2 { margin: 0; font: 500 clamp(47px, 7vw, 100px)/.9 var(--serif); letter-spacing: -.07em; text-transform: uppercase; }
+    h2 em { color: var(--accent); font-style: italic; }
+    .intro-copy { max-width: 520px; color: var(--soft); font-size: 16px; line-height: 1.8; }
+    .intro-copy p { margin: 0; }
+    .intro-rule { width: 100%; height: 1px; margin-top: 82px; background: var(--line); }
+
+    /* ─── Type interlude ─── */
+    .type-interlude {
+      min-height: 76vh;
+      display: grid;
+      align-items: center;
+      padding: 120px 0;
+      background: #a24f70;
+      color: #282231;
+      overflow: hidden;
+    }
+    .type-interlude .wrap { display: flex; justify-content: space-between; align-items: end; gap: 50px; }
+    .type-interlude-label { align-self: start; color: #4c531f; }
+    .type-lines { margin: 0; font: 500 clamp(55px, 10vw, 142px)/.82 var(--serif); letter-spacing: -.075em; text-transform: uppercase; }
+    .type-lines span { display: block; opacity: 0; transform: translateY(70px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1); }
+    .type-lines span:nth-child(2) { transition-delay: .15s; }
+    .type-lines span:nth-child(3) { transition-delay: .3s; }
+    .type-interlude.is-visible .type-lines span { opacity: 1; transform: translateY(0); }
+
+    /* ─── Stack section ─── */
+    .stack-section { padding: 60px 0 150px; overflow: hidden; background: var(--ink); }
+    .stack-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 45px; }
+    .stack-heading p { max-width: 260px; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.6; text-align: right; }
+    .stack { position: relative; width: min(920px, 100%); height: 470px; margin: 0 auto; perspective: 1100px; }
+    .stack-card {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 250px;
+      height: 390px;
+      padding: 13px;
+      background: #332b40;
+      border: 1px solid rgba(233,229,220,.17);
+      transform: translateX(-50%) rotate(var(--rotate)) translate(var(--x), var(--y));
+      transition: transform .8s cubic-bezier(.2,.85,.2,1), box-shadow .5s;
+      cursor: pointer;
+    }
+    .stack:hover .stack-card {
+      transform: translateX(-50%) rotate(var(--hover-rotate)) translate(var(--hover-x), var(--hover-y));
+      box-shadow: 0 28px 70px rgba(0,0,0,.35);
+    }
+    .stack-card.front-card { z-index: 6; }
+
+    .stack-card:nth-child(1) { z-index: 6; --rotate: -4deg; --x: -20px; --y: 24px; --hover-rotate: -10deg; --hover-x: -310px; --hover-y: 35px; }
+    .stack-card:nth-child(2) { z-index: 5; --rotate: 2deg; --x: 18px; --y: 7px; --hover-rotate: -3deg; --hover-x: -112px; --hover-y: -10px; }
+    .stack-card:nth-child(3) { z-index: 4; --rotate: 6deg; --x: 58px; --y: 35px; --hover-rotate: 5deg; --hover-x: 112px; --hover-y: 13px; }
+    .stack-card:nth-child(4) { z-index: 3; --rotate: -7deg; --x: -45px; --y: 47px; --hover-rotate: 11deg; --hover-x: 305px; --hover-y: 45px; }
+    .stack-card:nth-child(5) { z-index: 2; --rotate: 4deg; --x: 8px; --y: 57px; --hover-rotate: -8deg; --hover-x: 470px; --hover-y: 95px; }
+    .stack-card:nth-child(6) { z-index: 1; --rotate: -2deg; --x: -3px; --y: 54px; --hover-rotate: 15deg; --hover-x: -470px; --hover-y: 92px; }
+    .stack-image { height: 285px; display: grid; place-items: center; overflow: hidden; background: #3d334b; }
+    .stack-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s; }
+    .stack-card:nth-child(1) .stack-image img { object-position: center 12%; }
+    .stack-card:nth-child(5) .stack-image img { object-position: center 25%; }
+    .stack-card:hover img { transform: scale(1.06); }
+    .placeholder { display: grid; place-items: center; padding: 20px; color: var(--soft); background: linear-gradient(135deg, #40344d, #211c29); text-align: center; }
+    .placeholder strong { color: var(--accent); font: 500 13px var(--mono); letter-spacing: .12em; }
+    .stack-label { display: flex; justify-content: space-between; padding-top: 16px; color: #f5effc; }
+    .stack-label strong { font: 500 19px var(--serif); color: #ffffff; }
+    .stack-label small { color: #d4c2e6; }
+    .stack-label .mono { color: #e8c6d4; }
+
+    /* ─── Moments (chapter photographs) ─── */
+    .moments { padding: 125px 0 80px; background: #d8c9e4; }
+    .moments-top { display: flex; justify-content: space-between; align-items: end; margin-bottom: 105px; }
+    .moments-top p { max-width: 230px; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.7; text-align: right; }
+
+    /* VIEW ALL button */
+    .view-all-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      background: none;
+      border: none;
+      border-bottom: 1px solid rgba(162,79,112,.4);
+      color: var(--accent);
+      font: 500 10px/1.2 var(--mono);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color .25s, color .25s, gap .25s;
+      margin-top: 18px;
+    }
+    .view-all-btn:hover {
+      border-color: var(--accent);
+      gap: 16px;
+    }
+    .view-all-btn .vab-arrow {
+      display: inline-block;
+      transition: transform .25s;
+    }
+    .view-all-btn:hover .vab-arrow { transform: translateX(3px); }
+
+    .moment {
+      min-height: 78vh;
+      display: grid;
+      grid-template-columns: 1.06fr .94fr;
+      gap: 10vw;
+      align-items: center;
+      padding: 45px 0;
+      border-top: 1px solid var(--line);
+      /* entry state */
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .6s ease, transform .6s cubic-bezier(.22,.68,0,1.1);
+    }
+    .moment.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .moment:nth-of-type(odd) { grid-template-columns: .94fr 1.06fr; }
+    .moment:nth-of-type(odd) .moment-media { order: 2; }
+    .moment:nth-of-type(odd) .moment-copy { order: 1; }
+
+    .moment-media {
+      position: relative;
+      min-height: 540px;
+      overflow: hidden;
+      background: #2b2b27;
+      clip-path: inset(0 0 0 0);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .moment-media img {
+      width: 100%;
+      height: 540px;
+      object-fit: cover;
+      filter: saturate(.88);
+      transform: scale(1.04);
+      transition:
+        transform 1.2s cubic-bezier(.2,.7,.2,1),
+        filter 1s,
+        scale .6s cubic-bezier(.22,.68,0,1.05);
+    }
+    .moment.is-visible .moment-media img { transform: scale(1); filter: saturate(1); }
+
+    /* hover: image enlarges subtly */
+    .moment-media:hover img { transform: scale(1.035) !important; }
+
+    /* location badge on image */
+    .moment-location-badge {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 5px 10px;
+      background: rgba(28,22,34,.72);
+      border-left: 2px solid var(--accent);
+      color: rgba(233,229,220,.85);
+      font: 500 9px/1.3 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .moment-media:hover .moment-location-badge {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* always-visible chapter number overlay */
+    .moment-chapter-num {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
+      font: 500 11px/1 var(--mono);
+      letter-spacing: .18em;
+      color: rgba(233,229,220,.5);
+      pointer-events: none;
+    }
+
+    .moment[data-index="0"] .moment-media img,
+    .moment:first-of-type .moment-media img { object-position: center 12%; }
+    .moment[data-index="1"] .moment-media img { object-position: center 20%; }
+    .moment[data-index="2"] .moment-media img { object-position: center 20%; }
+    .moment[data-index="4"] .moment-media img { object-position: center 25%; }
+    .moment:nth-of-type(3) .moment-media img { transform: translateX(-12%) scale(1.1); }
+    .moment:nth-of-type(3).is-visible .moment-media img { transform: translateX(0) scale(1); }
+    .moment:nth-of-type(4) .moment-media { clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.77,0,.18,1), transform .6s; }
+    .moment:nth-of-type(4).is-visible .moment-media { clip-path: inset(0); }
+
+    .moment-tag {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 28px;
+      color: var(--accent);
+      transition: letter-spacing .3s ease;
+    }
+    .moment-tag::after { width: 45px; height: 1px; content: ''; background: currentColor; transition: width .35s ease; }
+    .moment:hover .moment-tag::after { width: 60px; }
+
+    .moment-copy { position: relative; }
+    .moment-copy::before {
+      display: block;
+      width: 42px;
+      height: 1px;
+      margin-bottom: 22px;
+      content: '';
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 1s .2s ease;
+    }
+    .moment.is-visible .moment-copy::before { transform: scaleX(1); }
+
+    .moment-copy h3 {
+      max-width: 480px;
+      margin: 0 0 10px;
+      font: 500 clamp(38px, 5vw, 71px)/.91 var(--serif);
+      letter-spacing: -.065em;
+      text-transform: uppercase;
+      color: #1f1926;
+    }
+    .moment-copy h3 em { color: var(--accent); font-style: italic; }
+
+    /* cinematic caption */
+    .moment-caption-line {
+      display: block;
+      margin: 0 0 22px;
+      max-width: 360px;
+      font: 400 italic 13px/1.6 var(--serif);
+      color: #5a4768;
+      letter-spacing: .01em;
+    }
+
+    .moment-copy p { max-width: 410px; margin: 0; color: #3b3045; font-size: 15px; font-weight: 500; line-height: 1.8; }
+    .moment-location { display: block; margin-top: 35px; color: #574665; font-weight: 600; }
+
+    /* ─── Photo Relay (carousel) ─── */
+    .relay { padding: 155px 0; background: var(--ink); overflow: hidden; }
+    .relay-header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 48px; }
+    .relay-header p { max-width: 220px; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.6; text-align: right; }
+    .carousel { position: relative; width: calc(100% + 28vw); margin-left: -14vw; }
+    .carousel-track {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      transform: translateX(calc(-1 * var(--slide, 0) * (min(64vw, 780px) + 22px)));
+      transition: transform .7s cubic-bezier(.2,.8,.2,1);
+    }
+    .carousel-item {
+      flex: 0 0 min(64vw, 780px);
+      opacity: .35;
+      transform: scale(.78);
+      transition: opacity .7s, transform .7s;
+      cursor: pointer;
+    }
+    .carousel-item.is-active { opacity: 1; transform: scale(1); }
+    .carousel-item img, .carousel-item .carousel-placeholder {
+      width: 100%;
+      height: min(60vh, 570px);
+      object-fit: cover;
+    }
+    .carousel-item:nth-child(1) img { object-position: center 12%; }
+    .carousel-item:nth-child(5) img { object-position: center 25%; }
+    .carousel-item img { filter: saturate(.8); transition: transform .6s ease, filter .4s; }
+    .carousel-item.is-active img { filter: saturate(1); }
+    .carousel-item:hover img { transform: scale(1.02); }
+    .carousel-placeholder { display: grid; place-items: center; background: #cbb9d9; color: var(--soft); }
+    .carousel-caption { display: flex; justify-content: space-between; padding-top: 17px; }
+    .carousel-caption strong { font: 500 23px var(--serif); }
+    .carousel-caption span { color: var(--soft); }
+    .carousel-controls { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 35px; }
+    .arrow {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      transition: .25s;
+      cursor: pointer;
+    }
+    .arrow:hover { color: var(--ink); background: var(--accent); border-color: var(--accent); }
+    .dots { display: flex; gap: 8px; }
+    .dot { width: 6px; height: 6px; padding: 0; border: 0; border-radius: 50%; background: var(--warm); transition: background .3s; cursor: pointer; }
+    .dot.active { background: var(--accent); }
+
+    /* ─── Closer section ─── */
+    .closer { min-height: 76vh; display: grid; place-items: center; padding: 90px 0; background: #cbb9d9; text-align: center; }
+    .closer h2 { font-size: clamp(75px, 15vw, 210px); }
+    .closer p { max-width: 340px; margin: 30px auto 0; color: var(--soft); font-size: 14px; line-height: 1.7; }
+
+    /* ─── Ending screen ─── */
+    .ending-screen {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px;
+      background: var(--paper);
+      color: var(--ink);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ending-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 60%, rgba(162,79,112,.09) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ending-tagline {
+      margin: 0 0 28px;
+      font: 500 clamp(44px, 7.5vw, 108px)/.92 var(--serif);
+      letter-spacing: -.055em;
+      text-transform: uppercase;
+      max-width: 880px;
+    }
+    .ending-tagline em { font-style: italic; color: var(--accent); }
+    .ending-sub {
+      max-width: 480px;
+      margin: 0 auto 56px;
+      color: var(--soft);
+      font-size: 15px;
+      line-height: 1.85;
+      font-style: italic;
+    }
+    .ending-divider {
+      width: 48px;
+      height: 1px;
+      background: var(--accent);
+      margin: 0 auto 44px;
+    }
+    .ending-credits {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ending-credits span {
+      display: block;
+      font: 600 11px/1.4 var(--mono);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+    .ending-credits strong {
+      font: 700 13px/1.4 var(--mono);
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .ending-archive {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      font: 500 10px/1 var(--mono);
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: rgba(233,229,220,.32);
+      white-space: nowrap;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 28px 0 35px;
+      color: var(--soft);
+      background: var(--ink);
+      border-top: 1px solid var(--line);
+    }
+    footer strong { color: var(--paper); font-size: 12px; }
+    .creator-credit { text-align: right; line-height: 1.8; }
+
+    /* ─── Lightbox ─── */
+    .lightbox {
+      position: fixed;
+      z-index: 50;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 30px;
+      background: rgba(7,7,6,.97);
+      backdrop-filter: blur(8px);
+    }
+    .lightbox.open { display: grid; animation: lbFadeIn .3s ease; }
+    @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .lightbox-figure { width: min(1080px, 100%); margin: 0; }
+    .lightbox-image { width: 100%; max-height: 78vh; object-fit: contain; background: #20201d; }
+    .lightbox-info { display: flex; justify-content: space-between; gap: 30px; padding-top: 18px; }
+    .lightbox-info h3 { margin: 0; font: 500 30px var(--serif); color: var(--ink); }
+    .lightbox-info p { max-width: 400px; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.6; }
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 34px;
+      font-weight: 300;
+      cursor: pointer;
+      opacity: .6;
+      transition: opacity .2s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      display: flex;
+      justify-content: space-between;
+      width: calc(100% - 70px);
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+    .lightbox-nav button {
+      width: 46px;
+      height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(21,21,19,.7);
+      pointer-events: auto;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .lightbox-nav button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ─── Contact Sheet / Grid overlay ─── */
+    .contact-sheet-overlay {
+      position: fixed;
+      z-index: 60;
+      inset: 0;
+      display: none;
+      background: rgba(7,7,6,.97);
+      backdrop-filter: blur(10px);
+      overflow-y: auto;
+      padding: 60px 40px 80px;
+    }
+    .contact-sheet-overlay.open { display: block; animation: lbFadeIn .4s ease; }
+    .cs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 48px;
+      border-bottom: 1px solid rgba(233,229,220,.12);
+      padding-bottom: 22px;
+    }
+    .cs-header-title {
+      font: 500 11px/1 var(--mono);
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+    .cs-header-title strong {
+      display: block;
+      font: 500 clamp(22px, 3vw, 38px)/1 var(--serif);
+      letter-spacing: -.05em;
+      color: var(--ink);
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+    .cs-close {
+      border: none;
+      background: none;
+      color: var(--ink);
+      font-size: 32px;
+      font-weight: 300;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .2s;
+    }
+    .cs-close:hover { opacity: 1; }
+    .cs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+    .cs-item {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      aspect-ratio: 4/3;
+      background: #1a141f;
+    }
+    .cs-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(.7) brightness(.85);
+      transition: filter .5s ease, transform .5s ease;
+    }
+    .cs-item:hover img { filter: saturate(1) brightness(1); transform: scale(1.04); }
+    .cs-item-num {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font: 500 10px/1 var(--mono);
+      letter-spacing: .2em;
+      color: rgba(233,229,220,.6);
+      z-index: 2;
+      transition: color .3s;
+    }
+    .cs-item:hover .cs-item-num { color: var(--accent); }
+    .cs-item-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 28px 12px 12px;
+      background: linear-gradient(to top, rgba(7,5,10,.82) 0%, transparent 100%);
+      font: 400 italic 12px/1 var(--serif);
+      color: rgba(233,229,220,.75);
+      z-index: 2;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .cs-item:hover .cs-item-label { opacity: 1; transform: translateY(0); }
+
+    /* ─── Cursor pointer for interactive elements ─── */
+    .stack-card,
+    .moment-media,
+    .carousel-item,
+    .cs-item,
+    .view-all-btn { cursor: pointer; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      .cs-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .wrap, .site-header, .hero-content { width: calc(100% - 34px); }
+      .header-right a { display: none; }
+      .header-right button { display: block; }
+      .hero-content { padding-bottom: 8vh; }
+      h1 { font-size: clamp(57px, 17vw, 100px); }
+      .hero-sub { display: block; margin-top: 35px; }
+      .scroll-prompt { margin-top: 25px; }
+      .hero-meta { display: none; }
+      .section-intro, .relay { padding: 100px 0; }
+      .intro-grid { display: block; }
+      .intro-copy { margin-top: 35px; }
+      .type-interlude { min-height: 70vh; padding: 90px 0; }
+      .type-interlude .wrap { display: block; }
+      .type-lines { margin-top: 40px; font-size: clamp(52px, 15vw, 92px); }
+      .stack-section { padding: 20px 0 100px; }
+      .stack-heading, .moments-top, .relay-header { display: block; }
+      .stack-heading p, .moments-top p, .relay-header p { margin-top: 18px; text-align: left; }
+      .stack { height: 390px; }
+      .stack-card { width: 180px; height: 300px; padding: 9px; }
+      .stack-image { height: 215px; }
+      .stack-card:nth-child(1) { --hover-x: -160px; }
+      .stack-card:nth-child(2) { --hover-x: -60px; }
+      .stack-card:nth-child(3) { --hover-x: 60px; }
+      .stack-card:nth-child(4) { --hover-x: 160px; }
+      .stack-card:nth-child(5), .stack-card:nth-child(6) { opacity: 0; }
+      .stack-label strong { font-size: 14px; }
+      .moments { padding: 95px 0 30px; }
+      .moment, .moment:nth-of-type(odd) { display: flex; flex-direction: column; min-height: auto; gap: 38px; padding: 70px 0; }
+      .moment:nth-of-type(odd) .moment-media, .moment:nth-of-type(odd) .moment-copy { order: initial; }
+      .moment-media, .moment-media img { width: 100%; min-height: 360px; height: 360px; max-height: 360px; }
+      .moment-copy h3 { font-size: 48px; }
+      .carousel { width: calc(100% + 34px); margin-left: -17px; }
+      .carousel-track { transform: translateX(calc(-1 * var(--slide, 0) * (78vw + 22px))); }
+      .carousel-item { flex-basis: 78vw; }
+      .carousel-item img, .carousel-item .carousel-placeholder { height: 390px; }
+      .closer { min-height: 65vh; }
+      footer { display: block; }
+      footer span { display: block; margin-top: 15px; }
+      .creator-credit { text-align: left; }
+      .lightbox { padding: 17px; }
+      .lightbox-info { display: block; }
+      .lightbox-info p { margin-top: 10px; }
+      .lightbox-nav { width: calc(100% - 34px); }
+      .contact-sheet-overlay { padding: 40px 16px 60px; }
+      .cs-grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
+      .ending-screen { padding: 60px 24px; }
+    }
+    @media (max-width: 480px) {
+      .cs-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="scrollProgress" aria-hidden="true"></div>
+  <div id="photoCursor" aria-hidden="true">VIEW</div>
+
+  <header class="site-header">
+    <a class="logo" href="#top">
+      <span class="logo-mark">CA</span>
+      <span class="logo-text">
+        <span class="event-name">Mediathon 3.0</span>
+        <span class="campus-name">BITS PILANI, DUBAI CAMPUS</span>
+        <span class="team-name">Team Name : Snap &amp; Style</span>
+      </span>
+    </a>
+    <nav class="header-right mono">
+      <a href="#moments">Six moments</a>
+      <a href="#relay">Photo relay</a>
+      <a href="#closer">Look closer</a>
+      <button type="button" id="openContactSheet" aria-label="View all six photographs">VIEW ALL 06</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <div class="hero-title-container">
+          <div class="hero-kicker mono">A photographic study / 2026</div>
+          <h1>
+            <span>Caught</span>
+            <span>in the act</span>
+          </h1>
+        </div>
+        <div class="hero-sub">
+          <p>Campus life, unposed.<br>Six small stories from one shared place.</p>
+          <div class="scroll-prompt mono"><i></i>Scroll to enter</div>
+        </div>
+        <div class="hero-meta mono">01 / 06 &nbsp;&nbsp; A campus archive</div>
+      </div>
+    </section>
+
+    <section class="section-intro">
+      <div class="wrap">
+        <div class="intro-grid">
+          <h2>The moments<br><em>between</em> the moments.</h2>
+          <div class="intro-copy">
+            <p>Campus life rarely stands still. Between lectures, deadlines, rehearsals and conversations, hundreds of small stories unfold around us. <em>Caught in the Act</em> is our attempt to notice them.</p>
+            <p style="margin-top:24px">No perfect poses. No staged moments. Just people absorbed in what they were already doing.</p>
+          </div>
+        </div>
+        <div class="intro-rule"></div>
+      </div>
+    </section>
+
+    <section class="type-interlude" id="typeInterlude">
+      <div class="wrap">
+        <span class="type-interlude-label mono">A note on the frame / 00</span>
+        <p class="type-lines">
+          <span>NO POSES.</span>
+          <span>NO RETAKES.</span>
+          <span>JUST MOMENTS.</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="stack-section">
+      <div class="wrap">
+        <div class="stack-heading">
+          <div>
+            <div class="eyebrow mono">The contact sheet / 01—06</div>
+            <h2>Six frames.<br><em>One pulse.</em></h2>
+          </div>
+          <p>Hover the contact sheet.<br>Enter any moment.</p>
+        </div>
+        <div class="stack" id="stack"></div>
+      </div>
+    </section>
+
+    <section class="moments" id="moments">
+      <div class="wrap">
+        <div class="moments-top">
+          <div>
+            <div class="eyebrow mono">01—06 / The visual story</div>
+            <h2>Six moments.<br><em>One campus.</em></h2>
+            <button class="view-all-btn" id="openContactSheet2" type="button">
+              VIEW ALL 06 <span class="vab-arrow">→</span>
+            </button>
+          </div>
+          <p>Scroll slowly.<br>Let each frame arrive.</p>
+        </div>
+
+        <!-- Chapter 01 -->
+        <article class="moment" data-index="0">
+          <div class="moment-media">
+            <img src="IMAGES/library.jpg" alt="Student reading in the library" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/library.jpg';}">
+            <span class="moment-chapter-num mono">01 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / LIBRARY</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 01 / Library</div>
+            <h3>Lost<br><em>in a book.</em></h3>
+            <em class="moment-caption-line">The world outside ceased to exist.</em>
+            <p>Caught somewhere between the shelves and the story. The rest of the campus can wait when a page has found you.</p>
+            <span class="moment-location mono">Library / A quiet kind of focus</span>
+          </div>
+        </article>
+
+        <!-- Chapter 02 -->
+        <article class="moment" data-index="1">
+          <div class="moment-media">
+            <img src="IMAGES/computer.jpg" alt="Students working together in the computer lab" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/computer.jpg';}">
+            <span class="moment-chapter-num mono">02 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / COMPUTER LAB</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 02 / Computer Lab</div>
+            <h3>Figuring<br><em>it out.</em></h3>
+            <em class="moment-caption-line">Four minds chasing the same answer.</em>
+            <p>Four minds, one screen, and a problem in progress. The answer is somewhere between the cursor and the next idea.</p>
+            <span class="moment-location mono">Computer lab / In progress</span>
+          </div>
+        </article>
+
+        <!-- Chapter 03 -->
+        <article class="moment" data-index="2">
+          <div class="moment-media">
+            <img src="IMAGES/Muisc.jpg" alt="Student with a guitar in the music room" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/Muisc.jpg';}">
+            <span class="moment-chapter-num mono">03 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / MUSIC ROOM</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 03 / Music Room</div>
+            <h3>Between<br><em>the notes.</em></h3>
+            <em class="moment-caption-line">The silence before the sound is its own melody.</em>
+            <p>Caught in the quiet moment before the next note. Every performance has a pause where possibility hangs in the air.</p>
+            <span class="moment-location mono">Music room / Before the sound</span>
+          </div>
+        </article>
+
+        <!-- Chapter 04 -->
+        <article class="moment" data-index="3">
+          <div class="moment-media">
+            <img src="IMAGES/work.jpg" alt="Locked in" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/work.jpg';}">
+            <span class="moment-chapter-num mono">04 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / CLASSROOM</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 04 / Classroom</div>
+            <h3>Locked<br><em>in.</em></h3>
+            <em class="moment-caption-line">No distractions. Only the work.</em>
+            <p>Caught in the quiet concentration of getting it done.</p>
+            <span class="moment-location mono">Classroom / Focus</span>
+          </div>
+        </article>
+
+        <!-- Chapter 05 -->
+        <article class="moment" data-index="4">
+          <div class="moment-media">
+            <img src="IMAGES/foosball.jpg" alt="Game on" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/foosball.jpg';}">
+            <span class="moment-chapter-num mono">05 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / RECREATION AREA</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 05 / Recreation Area</div>
+            <h3>Game<br><em>on.</em></h3>
+            <em class="moment-caption-line">Pure joy, unscripted.</em>
+            <p>Caught somewhere between competition and a good time.</p>
+            <span class="moment-location mono">Recreation area / Play</span>
+          </div>
+        </article>
+
+        <!-- Chapter 06 -->
+        <article class="moment" data-index="5">
+          <div class="moment-media">
+            <img src="IMAGES/board.jpg.jpeg" alt="Making the connection" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../IMAGES/board.jpg.jpeg';}">
+            <span class="moment-chapter-num mono">06 / 06</span>
+            <span class="moment-location-badge mono">CAUGHT AT / CLASSROOM</span>
+          </div>
+          <div class="moment-copy">
+            <div class="moment-tag mono">Chapter 06 / Classroom</div>
+            <h3>Making the<br><em>connection.</em></h3>
+            <em class="moment-caption-line">An idea finding its shape on the board.</em>
+            <p>Caught turning an idea into something everyone can see.</p>
+            <span class="moment-location mono">Classroom / Collaboration</span>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="relay" id="relay">
+      <div class="wrap">
+        <div class="relay-header">
+          <div>
+            <div class="eyebrow mono">The photo relay / 01—06</div>
+            <h2>Pass it<br><em>on.</em></h2>
+          </div>
+          <p>One photograph in focus.<br>The next one waiting.</p>
+        </div>
+      </div>
+      <div class="carousel" id="carousel">
+        <div class="carousel-track" id="carouselTrack"></div>
+        <div class="carousel-controls">
+          <button class="arrow" id="previous" type="button" aria-label="Previous photograph">&larr;</button>
+          <div class="dots" id="dots"></div>
+          <button class="arrow" id="next" type="button" aria-label="Next photograph">&rarr;</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="closer" id="closer">
+      <div>
+        <div class="eyebrow mono">A closing note / Mediathon 3.0</div>
+        <h2>Look<br><em>closer.</em></h2>
+        <p>The ordinary becomes a story when someone decides to notice.</p>
+      </div>
+    </section>
+
+    <!-- Ending Screen -->
+    <section class="ending-screen" id="endingScreen">
+      <h2 class="ending-tagline">CAUGHT, BUT<br><em>NEVER POSED.</em></h2>
+      <p class="ending-sub">Six moments that would've disappeared<br>if nobody had been looking.</p>
+      <div class="ending-divider"></div>
+      <div class="ending-credits">
+        <strong>Snap &amp; Style</strong>
+        <span>BITS Pilani, Dubai Campus</span>
+        <span>Mediathon 3.0 &nbsp;·&nbsp; 2026</span>
+      </div>
+      <span class="ending-archive mono">01—06 / END OF ARCHIVE</span>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <strong>CAUGHT IN THE ACT</strong>
+    <span class="mono">CAMPUS LIFE, UNPOSED. / MEDIATHON 3.0<br>BITS PILANI, DUBAI CAMPUS</span>
+    <span class="mono creator-credit">CREATED BY TEAM SNAP &amp; STYLE<br>ANAVI MEHTA / 2025A7PS0152U<br>ISHA SHAHUL HAMEED / 2025A7PS0066U</span>
+  </footer>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photograph details">
+    <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Close photograph">&times;</button>
+    <div class="lightbox-nav">
+      <button id="lightboxPrevious" type="button" aria-label="Previous photograph">&larr;</button>
+      <button id="lightboxNext" type="button" aria-label="Next photograph">&rarr;</button>
+    </div>
+    <figure class="lightbox-figure">
+      <img class="lightbox-image" id="lightboxImage" alt="">
+      <figcaption class="lightbox-info">
+        <h3 id="lightboxTitle"></h3>
+        <p id="lightboxCaption"></p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Contact Sheet Overlay -->
+  <div class="contact-sheet-overlay" id="contactSheetOverlay" role="dialog" aria-modal="true" aria-label="All six photographs">
+    <div class="cs-header">
+      <div class="cs-header-title">
+        The Archive
+        <strong>All Six Frames</strong>
+      </div>
+      <button class="cs-close" id="closeContactSheet" type="button" aria-label="Close contact sheet">&times;</button>
+    </div>
+    <div class="cs-grid" id="csGrid"></div>
+  </div>
+
+  <script>
+    const frames = [
+      {
+        number: '01',
+        title: 'Lost in a book.',
+        cinematicTitle: 'Lost in a Book',
+        label: 'Library',
+        location: 'Library',
+        caption: 'The world outside ceased to exist.',
+        fullCaption: 'Caught somewhere between the shelves and the story. The rest of the campus can wait when a page has found you.',
+        image: 'IMAGES/library.jpg',
+        alt: 'Student reading in the library'
+      },
+      {
+        number: '02',
+        title: 'Figuring it out.',
+        cinematicTitle: 'Figuring It Out',
+        label: 'Computer lab',
+        location: 'Computer Lab',
+        caption: 'Four minds chasing the same answer.',
+        fullCaption: 'Four minds, one screen, and a problem in progress. The answer is somewhere between the cursor and the next idea.',
+        image: 'IMAGES/computer.jpg',
+        alt: 'Students working together in the computer lab'
+      },
+      {
+        number: '03',
+        title: 'Between the notes.',
+        cinematicTitle: 'Between the Notes',
+        label: 'Music room',
+        location: 'Music Room',
+        caption: 'The silence before the sound is its own melody.',
+        fullCaption: 'Caught in the quiet moment before the next note. Every performance has a pause where possibility hangs in the air.',
+        image: 'IMAGES/Muisc.jpg',
+        alt: 'Student with a guitar in the music room'
+      },
+      {
+        number: '04',
+        title: 'Locked In.',
+        cinematicTitle: 'Locked In',
+        label: 'Classroom',
+        location: 'Classroom',
+        caption: 'No distractions. Only the work.',
+        fullCaption: 'Caught in the quiet concentration of getting it done.',
+        image: 'IMAGES/work.jpg',
+        alt: 'Locked in — quiet concentration'
+      },
+      {
+        number: '05',
+        title: 'Game On.',
+        cinematicTitle: 'Game On',
+        label: 'Recreation area',
+        location: 'Recreation Area',
+        caption: 'Pure joy, unscripted.',
+        fullCaption: 'Caught somewhere between competition and a good time.',
+        image: 'IMAGES/foosball.jpg',
+        alt: 'Game on — foosball'
+      },
+      {
+        number: '06',
+        title: 'Making the Connection.',
+        cinematicTitle: 'Making the Connection',
+        label: 'Classroom',
+        location: 'Classroom',
+        caption: 'An idea finding its shape on the board.',
+        fullCaption: 'Caught turning an idea into something everyone can see.',
+        image: 'IMAGES/board.jpg.jpeg',
+        alt: 'Making the connection — collaborative thinking'
+      }
+    ];
+
+    // ─── Hero parallax ───
+    const root = document.documentElement;
+    const hero = document.querySelector('#hero');
+    const updateHero = () => {
+      const progress = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 0.8)));
+      root.style.setProperty('--hero-progress', progress);
+    };
+    window.addEventListener('scroll', updateHero, { passive: true });
+    updateHero();
+
+    // ─── Image helper ───
+    const makeImage = (frame, className = '') => {
+      if (frame.placeholder) {
+        return `<div class="${className} placeholder"><span><strong>PHOTO ${frame.number}</strong><br><br><span class="mono">Moment yet to be caught</span></span></div>`;
+      }
+      return `<img class="${className}" src="${frame.image}" alt="${frame.alt}" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../' + this.getAttribute('src');}">`;
+    };
+
+    // ─── Populate Stack ───
+    const stack = document.querySelector('#stack');
+    frames.forEach((frame, index) => {
+      const card = document.createElement('article');
+      card.className = 'stack-card';
+      card.innerHTML = `
+        <div class="stack-image">${makeImage(frame)}</div>
+        <div class="stack-label">
+          <div>
+            <small class="mono">${frame.number} / ${frame.label}</small><br>
+            <strong>${frame.title}</strong>
+          </div>
+          <span class="mono">&#8599;</span>
+        </div>
+      `;
+      card.addEventListener('click', () => openLightbox(index));
+      stack.appendChild(card);
+    });
+
+    // ─── Observe Moments (fade+slide in, 0.6s) ───
+    const momentObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('is-visible');
+      });
+    }, { threshold: 0.18 });
+
+    document.querySelectorAll('.moment').forEach((moment, index) => {
+      momentObserver.observe(moment);
+      moment.addEventListener('click', () => openLightbox(index));
+    });
+
+    // ─── Observe Type Interlude ───
+    const typeInterlude = document.querySelector('#typeInterlude');
+    if (typeInterlude) {
+      new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) entry.target.classList.add('is-visible');
+        });
+      }, { threshold: 0.35 }).observe(typeInterlude);
+    }
+
+    // ─── Populate Carousel ───
+    const track = document.querySelector('#carouselTrack');
+    const dots = document.querySelector('#dots');
+    let current = 0;
+
+    frames.forEach((frame, index) => {
+      const item = document.createElement('article');
+      item.className = `carousel-item${index === 0 ? ' is-active' : ''}`;
+      item.innerHTML = `
+        ${makeImage(frame)}
+        <div class="carousel-caption">
+          <strong>${frame.title}</strong>
+          <span class="mono">${frame.number} / ${frame.label}</span>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        current = index;
+        updateCarousel();
+        openLightbox(index);
+      });
+      track.appendChild(item);
+
+      const dot = document.createElement('button');
+      dot.className = `dot${index === 0 ? ' active' : ''}`;
+      dot.type = 'button';
+      dot.setAttribute('aria-label', `Go to photograph ${frame.number}`);
+      dot.addEventListener('click', () => {
+        current = index;
+        updateCarousel();
+      });
+      dots.appendChild(dot);
+    });
+
+    function updateCarousel() {
+      track.style.setProperty('--slide', current);
+      document.querySelectorAll('.carousel-item').forEach((item, index) => {
+        item.classList.toggle('is-active', index === current);
+      });
+      document.querySelectorAll('.dot').forEach((dot, index) => {
+        dot.classList.toggle('active', index === current);
+      });
+    }
+
+    document.querySelector('#previous').addEventListener('click', () => {
+      current = (current + frames.length - 1) % frames.length;
+      updateCarousel();
+    });
+    document.querySelector('#next').addEventListener('click', () => {
+      current = (current + 1) % frames.length;
+      updateCarousel();
+    });
+
+    // ─── Lightbox ───
+    const lightbox = document.querySelector('#lightbox');
+    const lightboxImage = document.querySelector('#lightboxImage');
+    const lightboxTitle = document.querySelector('#lightboxTitle');
+    const lightboxCaption = document.querySelector('#lightboxCaption');
+    let lightboxIndex = 0;
+
+    function openLightbox(index) {
+      lightboxIndex = index;
+      const frame = frames[index];
+      lightboxTitle.textContent = `${frame.number} / ${frame.cinematicTitle}`;
+      lightboxCaption.textContent = `${frame.caption} — ${frame.location} / Caught in the act.`;
+      if (frame.placeholder) {
+        lightboxImage.removeAttribute('src');
+        lightboxImage.alt = `Photo ${frame.number} placeholder`;
+        lightboxImage.className = 'lightbox-image placeholder';
+      } else {
+        lightboxImage.className = 'lightbox-image';
+        lightboxImage.src = frame.image;
+        lightboxImage.alt = frame.alt;
+      }
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function moveLightbox(direction) {
+      lightboxIndex = (lightboxIndex + frames.length + direction) % frames.length;
+      openLightbox(lightboxIndex);
+    }
+
+    document.querySelector('#lightboxClose').addEventListener('click', closeLightbox);
+    document.querySelector('#lightboxPrevious').addEventListener('click', () => moveLightbox(-1));
+    document.querySelector('#lightboxNext').addEventListener('click', () => moveLightbox(1));
+    lightbox.addEventListener('click', (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (!lightbox.classList.contains('open') && !contactSheet.classList.contains('open')) return;
+      if (event.key === 'Escape') { closeLightbox(); closeContactSheet(); }
+      if (lightbox.classList.contains('open')) {
+        if (event.key === 'ArrowLeft') moveLightbox(-1);
+        if (event.key === 'ArrowRight') moveLightbox(1);
+      }
+    });
+
+    // ─── Contact Sheet ───
+    const contactSheet = document.querySelector('#contactSheetOverlay');
+    const csGrid = document.querySelector('#csGrid');
+
+    // Populate contact sheet grid
+    frames.forEach((frame, index) => {
+      const item = document.createElement('div');
+      item.className = 'cs-item';
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('role', 'button');
+      item.setAttribute('aria-label', `Open chapter ${frame.number}: ${frame.cinematicTitle}`);
+      item.innerHTML = `
+        <img src="${frame.image}" alt="${frame.alt}" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback=1; this.src='../' + this.getAttribute('src');}">
+        <span class="cs-item-num mono">${frame.number}</span>
+        <span class="cs-item-label">${frame.cinematicTitle}</span>
+      `;
+      item.addEventListener('click', () => {
+        closeContactSheet();
+        setTimeout(() => openLightbox(index), 120);
+      });
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+      });
+      csGrid.appendChild(item);
+    });
+
+    function openContactSheet() {
+      contactSheet.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeContactSheet() {
+      contactSheet.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelector('#openContactSheet').addEventListener('click', openContactSheet);
+    document.querySelector('#openContactSheet2').addEventListener('click', openContactSheet);
+    document.querySelector('#closeContactSheet').addEventListener('click', closeContactSheet);
+    contactSheet.addEventListener('click', (event) => {
+      if (event.target === contactSheet) closeContactSheet();
+    });
+
+    // ─── Scroll Progress & Custom Cursor ───
+    const scrollProgress = document.querySelector('#scrollProgress');
+    const photoCursor = document.querySelector('#photoCursor');
+    const updateProgress = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      document.documentElement.style.setProperty('--page-progress', max ? window.scrollY / max : 0);
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    document.querySelectorAll('.stack-card, .moment-media, .carousel-item, .cs-item').forEach((photo) => {
+      photo.addEventListener('pointerenter', () => photoCursor.classList.add('is-active'));
+      photo.addEventListener('pointermove', (event) => {
+        photoCursor.style.left = `${event.clientX}px`;
+        photoCursor.style.top = `${event.clientY}px`;
+      });
+      photo.addEventListener('pointerleave', () => photoCursor.classList.remove('is-active'));
+    });
+  </script>
+</body>
+</html>
