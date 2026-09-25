@@ -28,7 +28,11 @@
       overflow-x: hidden;
       cursor: default;
     }
-
+img, figure, .slide-image, .photo-wrapper img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
     /* ─── Film grain overlay ─── */
     body::before {
       position: fixed;
